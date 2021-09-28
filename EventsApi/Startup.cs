@@ -30,7 +30,8 @@ namespace EventsApi
         {
 
             services.AddControllers(opt => opt.ReturnHttpNotAcceptable = true)
-                    .AddXmlDataContractSerializerFormatters();
+                    .AddNewtonsoftJson();
+                    //.AddXmlDataContractSerializerFormatters();
 
             services.AddSwaggerGen(c =>
             {
