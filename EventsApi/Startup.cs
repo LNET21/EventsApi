@@ -36,6 +36,8 @@ namespace EventsApi
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventsApi", Version = "v1" });
             });
 
+            services.AddAutoMapper(typeof(Startup));
+
             services.AddDbContext<EventsApiContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("EventsApiContext")));
         }

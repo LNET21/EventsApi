@@ -1,14 +1,25 @@
-﻿using EventsApi.Data;
+﻿using EventsApi.Core.Entities;
+using EventsApi.Data;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EventsApi.Data.Repositories
 {
     public class EventRepo
     {
-        private EventsApiContext context;
+        private EventsApiContext db;
 
         public EventRepo(EventsApiContext context)
         {
-            this.context = context;
+            this.db = context;
+        }
+
+        public async Task<IEnumerable<CodeEvent>> GetAsync()
+        {
+            return await db.CodeEvent.ToListAsync();
         }
     }
 }

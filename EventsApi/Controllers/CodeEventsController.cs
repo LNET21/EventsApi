@@ -24,7 +24,12 @@ namespace EventsApi.Controllers
             eventRepo = new EventRepo(context);
         }
 
-  
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CodeEvent>>> GetAllEvents()
+        {
+            var events = await eventRepo.GetAsync();
+            return Ok(events);
+        }
 
 
      

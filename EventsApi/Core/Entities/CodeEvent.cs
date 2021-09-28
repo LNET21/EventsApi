@@ -15,6 +15,8 @@ namespace EventsApi.Core.Entities
         public int LocationId { get; set; }
         public Location Location { get; set; }
 
+        public ICollection<Lecture> Lectures { get; set; }
+
 
     }
 }
