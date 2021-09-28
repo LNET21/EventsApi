@@ -29,7 +29,8 @@ namespace EventsApi
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddControllers();
+            services.AddControllers(opt => opt.ReturnHttpNotAcceptable = true)
+                    .AddXmlDataContractSerializerFormatters();
 
             services.AddSwaggerGen(c =>
             {
