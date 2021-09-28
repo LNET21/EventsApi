@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using EventsApi.Data;
 
 namespace EventsApi
 {
@@ -33,6 +35,9 @@ namespace EventsApi
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "EventsApi", Version = "v1" });
             });
+
+            services.AddDbContext<EventsApiContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("EventsApiContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
