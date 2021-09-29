@@ -13,6 +13,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using EventsApi.Data;
+using EventsApi.Core.Repositories;
+using EventsApi.Data.Repositories;
 
 namespace EventsApi
 {
@@ -39,6 +41,8 @@ namespace EventsApi
             });
 
             services.AddAutoMapper(typeof(Startup));
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddDbContext<EventsApiContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("EventsApiContext")));

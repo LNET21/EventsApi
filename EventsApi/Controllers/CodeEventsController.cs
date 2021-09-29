@@ -10,6 +10,7 @@ using EventsApi.Data;
 using EventsApi.Data.Repositories;
 using AutoMapper;
 using EventsApi.Core.Dtos;
+using EventsApi.Core.Repositories;
 
 namespace EventsApi.Controllers
 {
@@ -17,21 +18,19 @@ namespace EventsApi.Controllers
     [ApiController]
     public class CodeEventsController : ControllerBase
     {
-        private readonly EventsApiContext _context;
+        private readonly IUnitOfWork uow;
         private readonly IMapper mapper;
-        private readonly EventRepo eventRepo;
 
-        public CodeEventsController(EventsApiContext context, IMapper mapper)
+        public CodeEventsController(IUnitOfWork uow, IMapper mapper)
         {
-            _context = context;
+            this.uow = uow;
             this.mapper = mapper;
-            eventRepo = new EventRepo(context);
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CodeEvent>>> GetEvents(bool includeLectures)
         {
-            var events = await eventRepo.GetAsync(includeLectures);
+            var events = await uow.EventRepo.GetAsync(includeLectures);
             return Ok(mapper.Map<IEnumerable<CodeEventDto>>(events));
         }
 
@@ -41,7 +40,7 @@ namespace EventsApi.Controllers
         {
             if (string.IsNullOrWhiteSpace(name)) return BadRequest();
 
-            var result = await eventRepo.GetAsync(name, includeLectures);
+            var result = await uow.EventRepo.GetAsync(name, includeLectures);
 
             if (result is null) return NotFound();
 
@@ -53,16 +52,16 @@ namespace EventsApi.Controllers
         [HttpPost]
         public async Task<ActionResult<CodeEvent>> CreateEvents(CodeEventDto dto)
         {
-            if(await eventRepo.GetAsync(dto.Name, false) != null)
+            if(await uow.EventRepo.GetAsync(dto.Name, false) != null)
             {
                 ModelState.AddModelError("Name", "Name is in use");
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
             var codeEvent = mapper.Map<CodeEvent>(dto);
-            await eventRepo.AddAsync(codeEvent);
+            await uow.EventRepo.AddAsync(codeEvent);
 
-            if(await eventRepo.CompleteAsync())
+            if(await uow.CompleteAsync())
             {
                 var model = mapper.Map<CodeEventDto>(codeEvent);
                 return CreatedAtAction(nameof(GetEvent), new { name = model.Name }, model);

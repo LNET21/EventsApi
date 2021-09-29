@@ -51,9 +51,6 @@ namespace EventsApi.Data.Repositories
             await db.AddAsync(codeEvent);
         }
 
-        public async Task<bool> CompleteAsync()
-        {
-            return (await db.SaveChangesAsync()) >= 0;
-        }
+     
     }
 }
