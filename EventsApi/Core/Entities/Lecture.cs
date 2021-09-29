@@ -12,7 +12,7 @@ namespace EventsApi.Core.Entities
         public int Level { get; set; }
 
         public int CodeEventId { get; set; }
-        public int SpeakerId { get; set; }
+        public int? SpeakerId { get; set; }
         public CodeEvent CodeEvent { get; set; }
         public Speaker Speaker { get; set; }
     }

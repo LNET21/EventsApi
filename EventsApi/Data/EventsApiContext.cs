@@ -15,5 +15,6 @@ namespace EventsApi.Data
         }
 
         public DbSet<CodeEvent> CodeEvent { get; set; }
+        public DbSet<Lecture> Lecture { get; set; }
     }
 }
