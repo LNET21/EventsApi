@@ -11,6 +11,7 @@ using EventsApi.Data.Repositories;
 using AutoMapper;
 using EventsApi.Core.Dtos;
 using EventsApi.Core.Repositories;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace EventsApi.Controllers
 {
@@ -52,7 +53,7 @@ namespace EventsApi.Controllers
         [HttpPost]
         public async Task<ActionResult<CodeEvent>> CreateEvents(CodeEventDto dto)
         {
-            if(await uow.EventRepo.GetAsync(dto.Name, false) != null)
+            if (await uow.EventRepo.GetAsync(dto.Name, false) != null)
             {
                 ModelState.AddModelError("Name", "Name is in use");
                 return BadRequest(ModelState);
@@ -61,7 +62,7 @@ namespace EventsApi.Controllers
             var codeEvent = mapper.Map<CodeEvent>(dto);
             await uow.EventRepo.AddAsync(codeEvent);
 
-            if(await uow.CompleteAsync())
+            if (await uow.CompleteAsync())
             {
                 var model = mapper.Map<CodeEventDto>(codeEvent);
                 return CreatedAtAction(nameof(GetEvent), new { name = model.Name }, model);
@@ -92,12 +93,25 @@ namespace EventsApi.Controllers
             }
         }
 
+        [HttpPatch("{name}")]
+        public async Task<ActionResult<CodeEventDto>> PatchEvent(string name, JsonPatchDocument<CodeEventDto> patchDocument)
+        {
+            var codeEvent = await uow.EventRepo.GetAsync(name, false); 
 
+            if (codeEvent is null) return NotFound();
 
+            var dto = mapper.Map<CodeEventDto>(codeEvent);
 
+            patchDocument.ApplyTo(dto, ModelState);
 
+            if (!TryValidateModel(dto)) return BadRequest(ModelState);
 
+            mapper.Map(dto, codeEvent);
 
-
+            if (await uow.CompleteAsync())
+                return Ok(mapper.Map<CodeEventDto>(codeEvent));
+            else
+                return StatusCode(500);
+        }
     }
 }
