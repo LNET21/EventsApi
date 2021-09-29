@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EventsApi.Core.Dtos;
+using EventsApi.Core.Entities;
 using EventsApi.Core.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -32,10 +33,34 @@ namespace EventsApi.Controllers
             return Ok(mapper.Map<IEnumerable<LectureDto>>(lectures));
         }
 
-        [HttpPost]
-        public async Task<ActionResult<LectureDto>> Create(string name)
+
+        [HttpGet("{id}")]
+       // [Route("{id}")]
+        public async Task<ActionResult<LectureDto>> GetLecture(string name, int? id)
         {
-            return null;
+            if (string.IsNullOrWhiteSpace(name) || id is null) return BadRequest();
+            var lecture = await uow.LecturesRepo.GetLectureAsync(id);
+            return Ok(mapper.Map<LectureDto>(lecture));
+        }
+
+       [HttpPost]
+        public async Task<ActionResult<LectureDto>> Create(string name, LectureCreateDto dto)
+        {
+            var codeEvent = await uow.EventRepo.GetAsync(name, false);
+
+            if (codeEvent is null) return NotFound();
+
+            var lecture = mapper.Map<Lecture>(dto);
+            lecture.CodeEvent = codeEvent;
+            await uow.LecturesRepo.AddAsync(lecture);
+
+            if (await uow.CompleteAsync())
+            {
+                var model = mapper.Map<LectureDto>(lecture);
+                return CreatedAtAction(nameof(GetLecture), new { name = codeEvent.Name, id = model.Id }, model);
+            }
+            else
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
 
 

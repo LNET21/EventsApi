@@ -20,5 +20,15 @@ namespace EventsApi.Data.Repositories
         {
             return await db.Lecture.Where(l => l.CodeEvent.Name == name).ToListAsync();
         }
+
+        public async Task AddAsync(Lecture lecture)
+        {
+            await db.AddAsync(lecture);
+        }
+
+        public async Task<Lecture> GetLectureAsync(int? id)
+        {
+            return await db.Lecture.FindAsync(id);
+        }
     }
 }
