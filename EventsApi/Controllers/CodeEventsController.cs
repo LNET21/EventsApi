@@ -72,6 +72,28 @@ namespace EventsApi.Controllers
             }
         }
 
+        [HttpPut("{name}")]
+        public async Task<ActionResult<CodeEventDto>> PutEvent(string name, CodeEventDto dto)
+        {
+            var codeevent = await uow.EventRepo.GetAsync(name, false);
+
+            if (codeevent is null) return StatusCode(StatusCodes.Status404NotFound);
+
+            mapper.Map(dto, codeevent);
+
+            // repo.Update(eventday);
+            if (await uow.CompleteAsync())
+            {
+                return Ok(mapper.Map<CodeEventDto>(codeevent));
+            }
+            else
+            {
+                return StatusCode(500);
+            }
+        }
+
+
+
 
 
 

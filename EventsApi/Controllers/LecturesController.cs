@@ -62,7 +62,5 @@ namespace EventsApi.Controllers
             else
                 return new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
-
-
     }
 }
