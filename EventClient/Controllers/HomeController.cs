@@ -13,6 +13,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -25,7 +26,10 @@ namespace EventClient.Controllers
 
         public HomeController()
         {
-            httpClient = new HttpClient();
+
+
+            httpClient = new HttpClient(new HttpClientHandler() { AutomaticDecompression = System.Net.DecompressionMethods.GZip });
+
             httpClient.BaseAddress = new Uri("https://localhost:5001");
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
@@ -33,15 +37,44 @@ namespace EventClient.Controllers
 
         public async Task<IActionResult> IndexAsync()
         {
+            var cancellation = new CancellationTokenSource();
             //var res = await SimpleGet();
             //var res = await GetWithHttpRequestMessage();
             //var res = await CreateLecture();
             //var res = await CreateLecture2();
             //var res = await Patch();
-            var res = await GetWithStream();
+            //var res = await GetWithStream();
+            //var res = await GetWithStreamZip();
+            cancellation.CancelAfter(500);
+            var res = await GetWithCancel(cancellation);
 
 
             return View();
+        }
+
+        private async Task<IEnumerable<CodeEventDto>> GetWithCancel(CancellationTokenSource cancellation)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/events");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+            IEnumerable<CodeEventDto> codeEvents = new List<CodeEventDto>();
+
+            try
+            {
+                var response = await httpClient.SendAsync(request, cancellation.Token);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                codeEvents = JsonSerializer.Deserialize<IEnumerable<CodeEventDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+
+            }
+            catch (OperationCanceledException ex)
+            {
+                //Do something
+
+            }
+
+            return codeEvents;
         }
 
         private async Task<IEnumerable<CodeEventDto>> GetWithStream()
@@ -54,13 +87,13 @@ namespace EventClient.Controllers
 
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-            using(var stream = await response.Content.ReadAsStreamAsync())
+            using (var stream = await response.Content.ReadAsStreamAsync())
             {
                 response.EnsureSuccessStatusCode();
 
-                using(var streamReader = new StreamReader(stream))
+                using (var streamReader = new StreamReader(stream))
                 {
-                    using(var jsonReader = new JsonTextReader(streamReader))
+                    using (var jsonReader = new JsonTextReader(streamReader))
                     {
                         var serializer = new Newtonsoft.Json.JsonSerializer();
                         eventsDtos = serializer.Deserialize<IEnumerable<CodeEventDto>>(jsonReader);
@@ -72,7 +105,36 @@ namespace EventClient.Controllers
 
         }
 
-        private async  Task<CodeEventDto> Patch()
+        private async Task<IEnumerable<CodeEventDto>> GetWithStreamZip()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/events");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+            request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+
+            IEnumerable<CodeEventDto> eventsDtos;
+
+
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            {
+                response.EnsureSuccessStatusCode();
+
+                using (var streamReader = new StreamReader(stream))
+                {
+                    using (var jsonReader = new JsonTextReader(streamReader))
+                    {
+                        var serializer = new Newtonsoft.Json.JsonSerializer();
+                        eventsDtos = serializer.Deserialize<IEnumerable<CodeEventDto>>(jsonReader);
+                    }
+                }
+            }
+
+            return eventsDtos;
+
+        }
+
+        private async Task<CodeEventDto> Patch()
         {
             var patchDocument = new JsonPatchDocument<CodeEventDto>();
             patchDocument.Remove(e => e.LocationStateProvince);
@@ -113,7 +175,7 @@ namespace EventClient.Controllers
             request.Content = new StringContent(serializedLecture);
             request.Content.Headers.ContentType = new MediaTypeHeaderValue(json);
 
-            var response =  await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -122,8 +184,8 @@ namespace EventClient.Controllers
 
             return codeEvents;
 
-        }  
-        
+        }
+
         private async Task<LectureDto> CreateLecture2()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api/events/httpclient/lectures");
@@ -137,7 +199,7 @@ namespace EventClient.Controllers
 
             request.Content = JsonContent.Create(lecture, typeof(LectureCreateDto), new MediaTypeHeaderValue(json));
 
-            var response =  await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -165,7 +227,7 @@ namespace EventClient.Controllers
 
         private async Task<IEnumerable<CodeEventDto>> SimpleGet()
         {
-            
+
             var response = await httpClient.GetAsync("api/events?includelectures=true");
             response.EnsureSuccessStatusCode();
 
@@ -177,7 +239,7 @@ namespace EventClient.Controllers
             //var codeEvents2 = JsonConvert.DeserializeObject<IEnumerable<CodeEventDto>>(content);
 
             return codeEvents;
-            
+
         }
     }
 }
