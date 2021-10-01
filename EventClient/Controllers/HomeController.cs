@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -36,9 +37,39 @@ namespace EventClient.Controllers
             //var res = await GetWithHttpRequestMessage();
             //var res = await CreateLecture();
             //var res = await CreateLecture2();
-            var res = await Patch();
+            //var res = await Patch();
+            var res = await GetWithStream();
+
 
             return View();
+        }
+
+        private async Task<IEnumerable<CodeEventDto>> GetWithStream()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/events");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+
+            IEnumerable<CodeEventDto> eventsDtos;
+
+
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            using(var stream = await response.Content.ReadAsStreamAsync())
+            {
+                response.EnsureSuccessStatusCode();
+
+                using(var streamReader = new StreamReader(stream))
+                {
+                    using(var jsonReader = new JsonTextReader(streamReader))
+                    {
+                        var serializer = new Newtonsoft.Json.JsonSerializer();
+                        eventsDtos = serializer.Deserialize<IEnumerable<CodeEventDto>>(jsonReader);
+                    }
+                }
+            }
+
+            return eventsDtos;
+
         }
 
         private async  Task<CodeEventDto> Patch()
