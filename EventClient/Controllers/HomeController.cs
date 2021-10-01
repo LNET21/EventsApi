@@ -1,7 +1,7 @@
 ﻿using EventClient.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace EventClient.Controllers
 {
@@ -36,8 +37,11 @@ namespace EventClient.Controllers
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
+
             var codeEvents = JsonSerializer.Deserialize<IEnumerable<CodeEventDto>>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
+            //Newtonsoft json
+            //var codeEvents2 = JsonConvert.DeserializeObject<IEnumerable<CodeEventDto>>(content);
 
             return codeEvents;
             
