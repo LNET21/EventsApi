@@ -30,9 +30,37 @@ namespace EventClient.Controllers
         public async Task<IActionResult> IndexAsync()
         {
             //var res = await SimpleGet();
-            var res = await GetWithHttpRequestMessage();
+            //var res = await GetWithHttpRequestMessage();
+            var res = await CreateLecture();
 
             return View();
+        }
+
+        private async Task<LectureDto> CreateLecture()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/events/httpclient/lectures");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+
+            var lecture = new LectureCreateDto
+            {
+                Title = "Create from client",
+                Level = 50
+            };
+
+            var serializedLecture = JsonSerializer.Serialize(lecture);
+
+            request.Content = new StringContent(serializedLecture);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue(json);
+
+            var response =  await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            var codeEvents = JsonSerializer.Deserialize<LectureDto>(content, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            return codeEvents;
+
         }
 
         private async Task<IEnumerable<CodeEventDto>> GetWithHttpRequestMessage()
