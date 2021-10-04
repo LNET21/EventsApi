@@ -1,3 +1,4 @@
+using EventClient.DelegatingHandlers;
 using EventClient.HttpClients;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -52,6 +53,7 @@ namespace EventClient
                 }); 
             
             services.AddHttpClient<IEventClient2, EventClient2>()
+                .AddHttpMessageHandler(handler => new RetryDelegatingHandler())
                 .ConfigurePrimaryHttpMessageHandler(handler => new HttpClientHandler()
                 {
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip
