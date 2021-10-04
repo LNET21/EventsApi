@@ -53,7 +53,8 @@ namespace EventClient.Controllers
             //cancellation.CancelAfter(500);
             //var res = await GetWithCancel(cancellation);
             //var res = await GetWithStreamAndFactory();
-            var res = await GetWithStreamAndFactory2();
+            //var res = await GetWithStreamAndFactory2();
+            var res = await codeEventClient.GetWithStream();
 
 
             return View();

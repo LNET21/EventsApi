@@ -45,15 +45,11 @@ namespace EventClient
             });
 
             //3
-            services.AddHttpClient<CodeEventClient>(client =>
-            {
-                client.BaseAddress = new Uri("https://localhost:5001");
-                client.DefaultRequestHeaders.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            }).ConfigurePrimaryHttpMessageHandler(handler => new HttpClientHandler()
-            {
-                AutomaticDecompression = System.Net.DecompressionMethods.GZip
-            });
+            services.AddHttpClient<CodeEventClient>()
+                .ConfigurePrimaryHttpMessageHandler(handler => new HttpClientHandler()
+                {
+                    AutomaticDecompression = System.Net.DecompressionMethods.GZip
+                });
 
 
             services.AddControllersWithViews();
