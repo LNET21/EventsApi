@@ -49,6 +49,12 @@ namespace EventClient
                 .ConfigurePrimaryHttpMessageHandler(handler => new HttpClientHandler()
                 {
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip
+                }); 
+            
+            services.AddHttpClient<IEventClient2, EventClient2>()
+                .ConfigurePrimaryHttpMessageHandler(handler => new HttpClientHandler()
+                {
+                    AutomaticDecompression = System.Net.DecompressionMethods.GZip
                 });
 
 

@@ -26,8 +26,9 @@ namespace EventClient.Controllers
         private const string json = "application/json";
         private readonly IHttpClientFactory httpClientFactory;
         private readonly CodeEventClient codeEventClient;
+        private readonly IEventClient2 eventClient2;
 
-        public HomeController(IHttpClientFactory httpClientFactory, CodeEventClient codeEventClient)
+        public HomeController(IHttpClientFactory httpClientFactory, CodeEventClient codeEventClient, IEventClient2 eventClient2)
         {
             //var client = httpClientFactory.CreateClient();
 
@@ -38,6 +39,7 @@ namespace EventClient.Controllers
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
             this.httpClientFactory = httpClientFactory;
             this.codeEventClient = codeEventClient;
+            this.eventClient2 = eventClient2;
         }
 
         public async Task<IActionResult> IndexAsync()
@@ -54,7 +56,10 @@ namespace EventClient.Controllers
             //var res = await GetWithCancel(cancellation);
             //var res = await GetWithStreamAndFactory();
             //var res = await GetWithStreamAndFactory2();
-            var res = await codeEventClient.GetWithStream();
+            //var res = await codeEventClient.GetWithStream();
+            var r1 = await eventClient2.GetAll(cancellation.Token);
+            var r2 = await eventClient2.Get(cancellation.Token, "httpclient");
+            var r3 = await eventClient2.GetLectures(cancellation.Token, "httpclient");
 
 
             return View();
