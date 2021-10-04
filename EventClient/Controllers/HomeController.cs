@@ -1,4 +1,5 @@
-﻿using EventClient.Models;
+﻿using EventClient.HttpClients;
+using EventClient.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -23,16 +24,20 @@ namespace EventClient.Controllers
     {
         private HttpClient httpClient;
         private const string json = "application/json";
+        private readonly IHttpClientFactory httpClientFactory;
+        private readonly CodeEventClient codeEventClient;
 
-        public HomeController()
+        public HomeController(IHttpClientFactory httpClientFactory, CodeEventClient codeEventClient)
         {
-
+            //var client = httpClientFactory.CreateClient();
 
             httpClient = new HttpClient(new HttpClientHandler() { AutomaticDecompression = System.Net.DecompressionMethods.GZip });
 
             httpClient.BaseAddress = new Uri("https://localhost:5001");
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+            this.httpClientFactory = httpClientFactory;
+            this.codeEventClient = codeEventClient;
         }
 
         public async Task<IActionResult> IndexAsync()
@@ -45,11 +50,40 @@ namespace EventClient.Controllers
             //var res = await Patch();
             //var res = await GetWithStream();
             //var res = await GetWithStreamZip();
-            cancellation.CancelAfter(500);
-            var res = await GetWithCancel(cancellation);
+            //cancellation.CancelAfter(500);
+            //var res = await GetWithCancel(cancellation);
+            //var res = await GetWithStreamAndFactory();
+            var res = await GetWithStreamAndFactory2();
 
 
             return View();
+        }
+
+        private async Task<IEnumerable<CodeEventDto>> GetWithStreamAndFactory2()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/events");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+
+            IEnumerable<CodeEventDto> eventsDtos;
+
+
+            var response = await codeEventClient.HttpClients.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            {
+                response.EnsureSuccessStatusCode();
+
+                using (var streamReader = new StreamReader(stream))
+                {
+                    using (var jsonReader = new JsonTextReader(streamReader))
+                    {
+                        var serializer = new Newtonsoft.Json.JsonSerializer();
+                        eventsDtos = serializer.Deserialize<IEnumerable<CodeEventDto>>(jsonReader);
+                    }
+                }
+            }
+
+            return eventsDtos;
         }
 
         private async Task<IEnumerable<CodeEventDto>> GetWithCancel(CancellationTokenSource cancellation)
@@ -86,6 +120,36 @@ namespace EventClient.Controllers
 
 
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            {
+                response.EnsureSuccessStatusCode();
+
+                using (var streamReader = new StreamReader(stream))
+                {
+                    using (var jsonReader = new JsonTextReader(streamReader))
+                    {
+                        var serializer = new Newtonsoft.Json.JsonSerializer();
+                        eventsDtos = serializer.Deserialize<IEnumerable<CodeEventDto>>(jsonReader);
+                    }
+                }
+            }
+
+            return eventsDtos;
+
+        } 
+        
+        private async Task<IEnumerable<CodeEventDto>> GetWithStreamAndFactory()
+        {
+            var client = httpClientFactory.CreateClient("EventClient");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/events");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(json));
+
+            IEnumerable<CodeEventDto> eventsDtos;
+
+
+            var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             using (var stream = await response.Content.ReadAsStreamAsync())
             {
